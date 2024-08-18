@@ -4,4 +4,4 @@ import { LambdaStack } from "./stacks/LambdaStack";
 
 const app = new App();
 new DataStack(app, "DataStack");
-new LambdaStack(app, "DataStack");
+new LambdaStack(app, "LambdaStack")
