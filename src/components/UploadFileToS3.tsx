@@ -1,61 +1,94 @@
-import React, { useState } from 'react';
-import { Upload } from 'antd';
-import type { GetProp, UploadFile, UploadProps } from 'antd';
-import ImgCrop from 'antd-img-crop';
+import { useState } from "react";
+import { S3Client, PutObjectCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
 
-type FileType = Parameters<GetProp<UploadProps, 'beforeUpload'>>[0];
+export default function FetchAndUpload() {
+  const [image, setImage] = useState<File | null>(null);
+  const [documents, setDocuments] = useState<string[]>([]);
 
-const UploadFileToS3: React.FC = () => {
-  const [fileList, setFileList] = useState<UploadFile[]>([
-    {
-      uid: '-1',
-      name: 'image.png',
-      status: 'done',
-      url: 'https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png',
-    },  {
-        uid: '-1',
-        name: 'image.png',
-        status: 'done',
-        url: 'https://images.unsplash.com/photo-1719937206498-b31844530a96?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDF8MHxmZWF0dXJlZC1waG90b3MtZmVlZHwxfHx8ZW58MHx8fHx8',
-      },
-  ]);
 
-  const onChange: UploadProps['onChange'] = ({ fileList: newFileList }) => {
-    setFileList(newFileList);
+
+  const awsRegion = import.meta.env.VITE_REGION
+  const bucketName = import.meta.env.VITE_BUCKET_NAME;
+  const awsImgSrc = import.meta.env.VITE_IMG_SRC;
+  const awsPrefix = import.meta.env.VITE_AWS_PREFIX
+  const accessKey = import.meta.env.VITE_AWS_ACCESS_KEY;
+  const secretAccessKey = import.meta.env.VITE_AWS_SECRET_ACCESS_KEY;
+
+
+  console.log('Bucket Name:', bucketName);
+console.log('Access Key:', accessKey);
+console.log('Secret Access Key:', secretAccessKey);
+
+
+  const s3Client = new S3Client({
+    region: awsRegion,
+    credentials: {
+      accessKeyId: accessKey,
+      secretAccessKey: secretAccessKey,
+    },
+  });
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setImage(e.target.files[0]);
+    }
   };
 
-  const onPreview = async (file: UploadFile) => {
-    let src = file.url as string;
-    if (!src) {
-      src = await new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file.originFileObj as FileType);
-        reader.onload = () => resolve(reader.result as string);
-      });
+  const handleUpload = async () => {
+    if (!image) return;
+
+    const params = {
+      Bucket:bucketName,
+      Key: `${awsPrefix}/${image.name}`,
+      Body: image,
+      ContentType: image.type,
+    };
+
+    try {
+      const data = await s3Client.send(new PutObjectCommand(params));
+      console.log("File uploaded successfully:", data);
+    } catch (err) {
+      console.error("Error uploading file:", err);
     }
-    const image = new Image();
-    image.src = src;
-    const imgWindow = window.open(src);
-    imgWindow?.document.write(image.outerHTML);
+  };
+
+  const handleFetch = async () => {
+    const params = {
+      Bucket:bucketName,
+      Prefix: `${awsPrefix}/`,
+    };
+
+    try {
+      const data = await s3Client.send(new ListObjectsV2Command(params));
+      console.log(`Fetch data: `, data);
+      if (data.Contents) {
+        const documentKeys = data.Contents.map((item) => encodeURIComponent(item.Key || ""));
+        setDocuments(documentKeys);
+      }
+    } catch (err) {
+      console.error("Error fetching documents:", err);
+    }
   };
 
   return (
     <>
-    
-    
-    <ImgCrop rotationSlider>
-      <Upload
-        action="https://660d2bd96ddfa2943b33731c.mockapi.io/api/upload"
-        listType="picture-card"
-        fileList={fileList}
-        onChange={onChange}
-        onPreview={onPreview}
-      >
-        {fileList.length < 5 && '+ Upload'}
-      </Upload>
-    </ImgCrop>
+      {image && <img src={URL.createObjectURL(image)} height="100" width="100" alt="Preview" />}
+
+      <input type="file" onChange={handleChange} />
+      <button onClick={handleFetch}>Fetch Documents</button>
+      <button onClick={handleUpload}>Upload</button>
+
+      <div>
+        {documents.map((doc) => (
+          <img 
+            key={doc} 
+            src={`${awsImgSrc}/${doc}`} 
+            alt={doc} 
+            height="100" 
+            width="100" 
+          />
+        ))}
+      </div>
     </>
   );
-};
-
-export default UploadFileToS3;
+}
