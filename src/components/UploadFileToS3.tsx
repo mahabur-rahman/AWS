@@ -40,6 +40,9 @@ const UploadFileToS3: React.FC = () => {
   };
 
   return (
+    <>
+    
+    
     <ImgCrop rotationSlider>
       <Upload
         action="https://660d2bd96ddfa2943b33731c.mockapi.io/api/upload"
@@ -51,6 +54,7 @@ const UploadFileToS3: React.FC = () => {
         {fileList.length < 5 && '+ Upload'}
       </Upload>
     </ImgCrop>
+    </>
   );
 };
 
