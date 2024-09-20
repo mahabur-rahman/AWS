@@ -10,9 +10,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@aws-amplify/ui-react": "^6.4.0",
     "@aws-sdk/client-s3": "^3.651.1",
     "antd": "^5.20.6",
     "antd-img-crop": "^4.23.0",
+    "aws-amplify": "^6.6.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
