@@ -1,9 +1,9 @@
-import UploadFileToS3 from "./components/UploadFileToS3";
+import Test from "./components/Test";
 
 export default function App() {
   return (
     <>
-      <UploadFileToS3 />
+      <Test />
     </>
   );
 }
