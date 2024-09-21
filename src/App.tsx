@@ -1,9 +1,12 @@
-import Test from "./components/Test";
+
+import ApiCall from './components/ApiCall'
 
 export default function App() {
   return (
-    <>
-      <Test />
-    </>
-  );
+   <>
+   <h1>Api call</h1>
+   <ApiCall />
+   </>
+  )
 }
+
